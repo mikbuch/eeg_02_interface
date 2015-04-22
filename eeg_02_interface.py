@@ -13,6 +13,7 @@ After the ANN is trained it can be used to classify a package of data.
 4. If 3 consecutive packages are classified as blinking then the picture is switched.
 '''
 
+get_package()
 
 
 
