@@ -28,8 +28,9 @@ class Parser:
         self.current_vector = []
         self.raw_values = []
         self.package = []
-        self.package_count = 0
+        self.package_counter = 0
         self.package_size = 128
+        self.package_full = False
         self.current_meditation = 0
         self.current_attention= 0
         self.current_spectrum = []
@@ -37,14 +38,14 @@ class Parser:
         self.state ="initializing"
         self.raw_file = None
         self.esense_file = None
-        self.mindwaveMobileSocket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-            mindwaveMobileAddress = '74:E5:43:89:58:03';
-            try:
-                    self.mindwaveMobileSocket.connect((mindwaveMobileAddress, 1))
-                    print "Succesfully connected..."
-                    self.connection_time = time()
-                except bluetooth.btcommon.BluetoothError as error:
-                    print "Could not connect: ", error, "; Retrying in 5s..."
+        self.mindwaveMobileSocket = bluetooth.BluetoothSocket(bluetooth.RFCOMM) 
+        mindwaveMobileAddress = '74:E5:43:89:58:03';
+        try:
+            self.mindwaveMobileSocket.connect((mindwaveMobileAddress, 1))
+            print "Succesfully connected..."
+            self.connection_time = time()
+        except bluetooth.btcommon.BluetoothError as error:
+            print "Could not connect: ", error, "; Retrying in 5s..."
         
     def update(self):
         bytes = self.mindwaveMobileSocket.recv(1000)
@@ -93,6 +94,10 @@ class Parser:
                         self.sending_data = True
                         left = packet_length-2
                         while left>0:
+#                             if self.package_full:
+#                                 self.package = []
+#                                 self.package_counter = 0
+#                                 self.package_full = False
                             if packet_code ==0x80: # raw value
                                 row_length = yield
                                 a = yield
@@ -104,14 +109,18 @@ class Parser:
                                 left-=2
                                 
                                 if self.raw_file:
-                                    t = time()-self.connection_time
-                                    self.raw_file.write("%f\n" %((float(value)*0.0002197265625)))
-                                    self.package.append("%f\n" %((float(value)*0.0002197265625)))
-                                    self.package_counter += 1
-                                    print(self.package_counter)
-                                    if self.package_counter == self.package_size:
+
+                                    if self.package_full:
                                         self.package = []
                                         self.package_counter = 0
+                                        self.package_full = False
+                                    t = time()-self.connection_time
+                                    self.raw_file.write("%f\n" %((float(value)*0.0002197265625)))
+                                    self.package.append(float(value)*0.0002197265625)
+                                    self.package_counter += 1
+#                                     print(self.package_counter)
+                                    if self.package_counter > self.package_size:
+                                        self.package_full = True
 
                             elif packet_code == 0x02: # Poor signal
                                 a = yield
@@ -154,7 +163,6 @@ class Parser:
                     pass # sync failed
             else:
                 pass # sync failed
-#         if self.package_counter == self.package_size:
-#             return self.package
+
 dongle_state = None
 DONGLE_STANDBY= "Standby"
