@@ -26,14 +26,15 @@ int main(int argc, char *argv[])
 	fann_type *calc_out;
 	fann_type input[3];
 
-	struct fann *ann = fann_create_from_file("net_eeg_data_float.net");
+	struct fann *ann = fann_create_from_file("fann_interface/net_eeg_data_float.net");
 
 	input[0] = strtof (argv[1], NULL);
 	input[1] = strtof (argv[2], NULL);
 	input[2] = strtof (argv[3], NULL);
 	calc_out = fann_run(ann, input);
 
-	printf("is it blink? (%f,%f,%f) -> %f \n", input[0], input[1], input[2], calc_out[0]);
+// 	printf("is it blink? (%f,%f,%f) -> %f \n", input[0], input[1], input[2], calc_out[0]);
+	printf("%f", calc_out[0]);
 
 	fann_destroy(ann);
 	return 0;
